@@ -1,0 +1,12 @@
+let code = 1;
+if (code == 1) {
+    print 999;
+} else {
+    print 0;
+}
+
+if (code != 1) {
+    print 0;
+} else {
+    print 888;
+}

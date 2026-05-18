@@ -1,0 +1,8 @@
+let x = 50;
+let y = 100;
+let isLess = x < y;
+let isGreaterEq = x >= y;
+let isNotEq = x != y;
+print isLess;
+print isGreaterEq;
+print isNotEq;
