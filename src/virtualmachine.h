@@ -3,6 +3,7 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
+
 enum Opcode {
     OP_PUSH, OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_LESS, OP_GREATER, 
     OP_LESS_EQUAL, OP_GREATER_EQUAL, 
@@ -64,6 +65,7 @@ private:
     std::vector<int> code;  
     int ip = 0;             
     int memory[256] = {0}; 
+    long long stepLimit = 100000;
 
     void push(int value) { stack.push_back(value); }
     
@@ -79,9 +81,14 @@ private:
 
 public:
     void load(std::vector<int> bytecode) { code = bytecode; ip = 0; }
+    void setStepLimit(long long limit) { stepLimit = limit; }
 
     void run() {
+        long long steps = 0;
         while (ip < code.size()) {
+            if (++steps > stepLimit) {
+                throw std::runtime_error("RUNTIME ERROR: Step limit exceeded. Possible infinite loop.");
+            }
             int instruction = code[ip];
 
             if (instruction == OP_HALT) { break; }
@@ -97,7 +104,15 @@ public:
             else if (instruction == OP_ADD) { int b = pop(); int a = pop(); push(a + b); ip++; }
             else if (instruction == OP_SUB) { int b = pop(); int a = pop(); push(a - b); ip++; }
             else if (instruction == OP_MUL) { int b = pop(); int a = pop(); push(a * b); ip++; }
-            else if (instruction == OP_DIV) { int b = pop(); int a = pop(); push(a / b); ip++; }
+            else if (instruction == OP_DIV) {
+                int b = pop();
+                int a = pop();
+                if (b == 0) {
+                    throw std::runtime_error("RUNTIME ERROR: Division by zero.");
+                }
+                push(a / b);
+                ip++;
+            }
             else if (instruction == OP_LESS) { int b = pop(); int a = pop(); push(a < b ? 1 : 0); ip++; }
             else if (instruction == OP_GREATER) { int b = pop(); int a = pop(); push(a > b ? 1 : 0); ip++; } 
             else if (instruction == OP_LESS_EQUAL) { int b = pop(); int a = pop(); push(a <= b ? 1 : 0); ip++; }    
@@ -133,7 +148,7 @@ public:
                 int targetIndex = code[ip]; 
                 ip = targetIndex;
             }
-            
+            // -----------------------
 
             else if (instruction == OP_PRINT) { std::cout << "Your output: " << pop() << "\n"; ip++; }
             else { std::cout << "VM ERROR: Unknown instruction!\n"; break; }
