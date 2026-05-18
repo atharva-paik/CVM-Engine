@@ -1,8 +1,8 @@
-//Implemented stack based virtual machine execution
 #pragma once
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <string>
 enum Opcode {
     OP_PUSH, OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_LESS, OP_GREATER, 
     OP_LESS_EQUAL, OP_GREATER_EQUAL, 
@@ -10,6 +10,53 @@ enum Opcode {
     OP_SET_VAR, OP_GET_VAR, OP_INPUT, OP_JUMP_IF_FALSE, 
     OP_JUMP          
 };
+
+inline std::string opcodeName(int opcode) {
+    switch (opcode) {
+        case OP_PUSH: return "OP_PUSH";
+        case OP_ADD: return "OP_ADD";
+        case OP_SUB: return "OP_SUB";
+        case OP_MUL: return "OP_MUL";
+        case OP_DIV: return "OP_DIV";
+        case OP_LESS: return "OP_LESS";
+        case OP_GREATER: return "OP_GREATER";
+        case OP_LESS_EQUAL: return "OP_LESS_EQUAL";
+        case OP_GREATER_EQUAL: return "OP_GREATER_EQUAL";
+        case OP_EQUAL: return "OP_EQUAL";
+        case OP_NEQ: return "OP_NEQ";
+        case OP_PRINT: return "OP_PRINT";
+        case OP_HALT: return "OP_HALT";
+        case OP_SET_VAR: return "OP_SET_VAR";
+        case OP_GET_VAR: return "OP_GET_VAR";
+        case OP_INPUT: return "OP_INPUT";
+        case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
+        case OP_JUMP: return "OP_JUMP";
+        default: return "UNKNOWN";
+    }
+}
+
+inline bool opcodeHasOperand(int opcode) {
+    return opcode == OP_PUSH ||
+           opcode == OP_SET_VAR ||
+           opcode == OP_GET_VAR ||
+           opcode == OP_INPUT ||
+           opcode == OP_JUMP_IF_FALSE ||
+           opcode == OP_JUMP;
+}
+
+inline void printBytecode(const std::vector<int>& bytecode) {
+    std::cout << "===== BYTECODE =====\n";
+    for (size_t i = 0; i < bytecode.size(); ++i) {
+        int opcode = bytecode[i];
+        std::cout << i << ": " << opcodeName(opcode);
+        if (opcodeHasOperand(opcode) && i + 1 < bytecode.size()) {
+            std::cout << " " << bytecode[i + 1];
+            ++i;
+        }
+        std::cout << "\n";
+    }
+    std::cout << "====================\n";
+}
 
 class VM {
 private:
@@ -86,7 +133,7 @@ public:
                 int targetIndex = code[ip]; 
                 ip = targetIndex;
             }
-            // -----------------------
+            
 
             else if (instruction == OP_PRINT) { std::cout << "Your output: " << pop() << "\n"; ip++; }
             else { std::cout << "VM ERROR: Unknown instruction!\n"; break; }
