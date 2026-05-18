@@ -73,10 +73,10 @@ Booleans are represented internally as integers: `true` is `1`, and `false` is `
 From the project root:
 
 ```powershell
-g++ -std=c++17 src/main.cpp -o cvm_new.exe
+g++ -std=c++17 src/main.cpp -o cvm.exe
 ```
 
-This creates a Windows executable named `cvm_new.exe`.
+This creates a Windows executable named `cvm.exe`.
 
 ## Usage
 
