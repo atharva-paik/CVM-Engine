@@ -1,0 +1,5 @@
+let multiplier = 10;
+input userVal; 
+
+let result = userVal * multiplier;
+print result;
