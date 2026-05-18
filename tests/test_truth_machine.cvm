@@ -1,12 +1,9 @@
-let code = 1;
-if (code == 1) {
-    print 999;
-} else {
-    print 0;
-}
+input userVal;
 
-if (code != 1) {
+if (userVal == 0) {
     print 0;
 } else {
-    print 888;
+    while (userVal == 1) {
+        print 1;
+    }
 }
