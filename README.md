@@ -17,7 +17,7 @@
 
 ### Problem Statement
 
-The goal of this Even Semester Project was to build a complete compiler and runtime pipeline in order to deeply understand **low-level execution**, **language design**, **control flow**, **memory handling**, and **program interpretation/compilation**. A core requirement of the project was to avoid external parser-generators such as **Lex/Yacc** and to avoid dependence on third-party libraries, ensuring that every major subsystem was implemented directly in C++.
+The goal of this Project was to build a complete compiler and runtime pipeline in order to deeply understand **low-level execution**, **language design**, **control flow**, **memory handling**, and **program interpretation/compilation**. A core requirement of the project was to avoid external parser-generators such as **Lex/Yacc** and to avoid dependence on third-party libraries, ensuring that every major subsystem was implemented directly in C++.
 
 ### Deliverables Achieved
 
