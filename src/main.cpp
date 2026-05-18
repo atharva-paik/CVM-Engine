@@ -1,4 +1,3 @@
-//Connected compiler pipeline in main entry point
 #include <iostream>
 #include <vector>
 #include <string>
@@ -10,29 +9,32 @@
 #include "compiler.h" 
 #include "virtualmachine.h" 
 
-
-void runPipeline(const std::string& code, bool printBytecode = false, bool printAst = false) {
+void runPipeline(std::string code, bool showAST, bool showBytecode) {
     try {
         Lexer lexer(code);
-        Parser parser(lexer.tokenize());
+        std::vector<Token> tokens = lexer.tokenize();
+        Parser parser(tokens);
         Compiler compiler;
         VM vm;
+        
         std::vector<std::shared_ptr<ASTNode>> program = parser.parse();
         
-        if (printAst) {
-            for (const auto& node : program) {
-                if (node) {
-                    node->print(0);
-                }
-            }
+    
+        if (showAST) {
+            printAST(program);
         }
 
         std::vector<int> bytecode = compiler.compile(program);
-        if (printBytecode) {
-            compiler.printBytecode();
+        
+      
+        if (showBytecode) {
+            printBytecode(bytecode);
         }
+
+        std::cout << "output->\n";
         vm.load(bytecode);
         vm.run(); 
+        std::cout << "==========================\n";
         
     } catch (const std::exception& e) {
         std::cout << e.what() << "\n";
@@ -42,25 +44,26 @@ void runPipeline(const std::string& code, bool printBytecode = false, bool print
 }
 
 int main(int argc, char* argv[]) {
-    bool printBytecode = false;
-    bool printAst = false;
-    std::string filename;
+    bool showAST = false;
+    bool showBytecode = false;
+    std::string filename = "";
 
-    for (int i = 1; i < argc; ++i) {
-        std::string argument = argv[i];
-
-        if (argument == "--bytecode") {
-            printBytecode = true;
-        } else if (argument == "--ast") {
-            printAst = true;
-        } else if (filename.empty()) {
-            filename = argument;
+    
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--ast") {
+            showAST = true;
+        } else if (arg == "--bytecode") {
+            showBytecode = true;
+        } else if (arg == "--debug") { 
+            showAST = true;
+            showBytecode = true;
         } else {
-            std::cout << "Error: Unexpected argument '" << argument << "'\n";
-            return 1;
+            filename = arg; 
         }
     }
 
+  
     if (!filename.empty()) {
         std::ifstream file(filename);
         
@@ -74,7 +77,7 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Running " << filename << "...\n";
         std::cout << "-----------------------------------------\n";
-        runPipeline(buffer.str(), printBytecode, printAst);
+        runPipeline(buffer.str(), showAST, showBytecode);
         std::cout << "-----------------------------------------\n";
         return 0;
     }
@@ -82,7 +85,6 @@ int main(int argc, char* argv[]) {
    
     std::cout << "-----------------------------------------\n";
     std::cout << "        CVM++ INTERACTIVE TERMINAL       \n";
-    
     std::cout << "-----------------------------------------\n\n";
 
     while (true) {
@@ -96,7 +98,7 @@ int main(int argc, char* argv[]) {
         }
         if (code.empty()) continue;
 
-        runPipeline(code, printBytecode, printAst);
+        runPipeline(code, showAST, showBytecode);
     }
 
     return 0;
