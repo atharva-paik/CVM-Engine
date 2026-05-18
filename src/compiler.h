@@ -1,6 +1,4 @@
-//Implemented bytecode compiler
 #pragma once
-#include <iostream>
 #include <vector>
 #include <memory>
 #include <map>
@@ -13,44 +11,6 @@ private:
     std::vector<int> bytecode;
     std::map<std::string, int> memoryMap; 
     int nextSlot = 0; 
-
-    static const char* opcodeToString(int opcode) {
-        switch (opcode) {
-            case OP_PUSH: return "OP_PUSH";
-            case OP_ADD: return "OP_ADD";
-            case OP_SUB: return "OP_SUB";
-            case OP_MUL: return "OP_MUL";
-            case OP_DIV: return "OP_DIV";
-            case OP_LESS: return "OP_LESS";
-            case OP_GREATER: return "OP_GREATER";
-            case OP_LESS_EQUAL: return "OP_LESS_EQUAL";
-            case OP_GREATER_EQUAL: return "OP_GREATER_EQUAL";
-            case OP_EQUAL: return "OP_EQUAL";
-            case OP_NEQ: return "OP_NEQ";
-            case OP_PRINT: return "OP_PRINT";
-            case OP_HALT: return "OP_HALT";
-            case OP_SET_VAR: return "OP_SET_VAR";
-            case OP_GET_VAR: return "OP_GET_VAR";
-            case OP_INPUT: return "OP_INPUT";
-            case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE";
-            case OP_JUMP: return "OP_JUMP";
-            default: return nullptr;
-        }
-    }
-
-    static int operandCount(int opcode) {
-        switch (opcode) {
-            case OP_PUSH:
-            case OP_SET_VAR:
-            case OP_GET_VAR:
-            case OP_INPUT:
-            case OP_JUMP_IF_FALSE:
-            case OP_JUMP:
-                return 1;
-            default:
-                return 0;
-        }
-    }
 
     int getSlot(std::string name) {
         if (memoryMap.find(name) == memoryMap.end()) { memoryMap[name] = nextSlot++; }
@@ -78,6 +38,14 @@ public:
         else if (auto assignNode = std::dynamic_pointer_cast<AssignNode>(node)) {
             compileNode(assignNode->value); 
             bytecode.push_back(OP_SET_VAR); bytecode.push_back(getSlot(assignNode->varName));
+        }
+        else if (auto unaryNode = std::dynamic_pointer_cast<UnaryOpNode>(node)) {
+            if (unaryNode->op == MINUS) {
+                bytecode.push_back(OP_PUSH);
+                bytecode.push_back(0);
+                compileNode(unaryNode->operand);
+                bytecode.push_back(OP_SUB);
+            }
         }
         else if (auto blockNode = std::dynamic_pointer_cast<BlockNode>(node)) {
             for (auto stmt : blockNode->statements) compileNode(stmt);
@@ -153,33 +121,5 @@ public:
         
         bytecode.push_back(OP_HALT);
         return bytecode;
-    }
-
-    void printBytecode() const {
-        for (std::size_t i = 0; i < bytecode.size();) {
-            const int instruction = bytecode[i];
-            const char* opcodeName = opcodeToString(instruction);
-
-            if (!opcodeName) {
-                std::cout << i << ": " << instruction << "\n";
-                ++i;
-                continue;
-            }
-
-            std::cout << i << ": " << opcodeName;
-
-            const int operands = operandCount(instruction);
-            for (int operandIndex = 0; operandIndex < operands; ++operandIndex) {
-                const std::size_t operandPosition = i + 1 + operandIndex;
-                if (operandPosition < bytecode.size()) {
-                    std::cout << " " << bytecode[operandPosition];
-                } else {
-                    std::cout << " <missing>";
-                }
-            }
-
-            std::cout << "\n";
-            i += 1 + operands;
-        }
     }
 };
