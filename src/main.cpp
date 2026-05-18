@@ -11,14 +11,26 @@
 #include "virtualmachine.h" 
 
 
-void runPipeline(std::string code) {
+void runPipeline(const std::string& code, bool printBytecode = false, bool printAst = false) {
     try {
         Lexer lexer(code);
         Parser parser(lexer.tokenize());
         Compiler compiler;
         VM vm;
+        std::vector<std::shared_ptr<ASTNode>> program = parser.parse();
         
-        std::vector<int> bytecode = compiler.compile(parser.parse());
+        if (printAst) {
+            for (const auto& node : program) {
+                if (node) {
+                    node->print(0);
+                }
+            }
+        }
+
+        std::vector<int> bytecode = compiler.compile(program);
+        if (printBytecode) {
+            compiler.printBytecode();
+        }
         vm.load(bytecode);
         vm.run(); 
         
@@ -30,8 +42,26 @@ void runPipeline(std::string code) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc > 1) {
-        std::string filename = argv[1];
+    bool printBytecode = false;
+    bool printAst = false;
+    std::string filename;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string argument = argv[i];
+
+        if (argument == "--bytecode") {
+            printBytecode = true;
+        } else if (argument == "--ast") {
+            printAst = true;
+        } else if (filename.empty()) {
+            filename = argument;
+        } else {
+            std::cout << "Error: Unexpected argument '" << argument << "'\n";
+            return 1;
+        }
+    }
+
+    if (!filename.empty()) {
         std::ifstream file(filename);
         
         if (!file.is_open()) {
@@ -44,7 +74,7 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Running " << filename << "...\n";
         std::cout << "-----------------------------------------\n";
-        runPipeline(buffer.str());
+        runPipeline(buffer.str(), printBytecode, printAst);
         std::cout << "-----------------------------------------\n";
         return 0;
     }
@@ -66,7 +96,7 @@ int main(int argc, char* argv[]) {
         }
         if (code.empty()) continue;
 
-        runPipeline(code);
+        runPipeline(code, printBytecode, printAst);
     }
 
     return 0;
