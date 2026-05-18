@@ -1,0 +1,50 @@
+=========================================
+CVM++ Engine
+=========================================
+
+This file contains instructions for the custom compiler we built.
+we built this entirely from scratch in C++ as my custom compiler and stack-based virtual machine project. 
+we wanted to really understand how low-level execution works under the hood, so we didn't use any external parser-generators or libraries. The whole pipeline is hand-rolled, moving through four main phases:
+1. Lexer (reads the raw code and groups it into tokens)
+2. Parser (recursive descent, builds the Abstract Syntax Tree)
+3. Compiler (flattens the tree into my own custom bytecode)
+4. Virtual Machine (executes the bytecode on a custom integer memory stack)
+
+-----------------------------------------
+How to Build It
+-----------------------------------------
+Since it's pure C++, compiling is super easy. Just open your terminal in this folder and run:
+
+    g++ main.cpp -o cvm
+
+This will spit out the executable you need to run the engine.
+
+-----------------------------------------
+How to Run It
+-----------------------------------------
+we built two different ways to use the language. 
+
+1. The Interactive Terminal (REPL)
+If you just run the executable without giving it a file, it drops you into a live terminal where you can test code instantly. 
+
+    Type: .\cvm.exe
+
+2. Running a Script
+To run a full program (like the demo files included), just pass the file name to the engine.
+
+    Type: .\cvm.exe demo_calculator.cvm
+
+-----------------------------------------
+Language Features & Quirks
+-----------------------------------------
+The language handles variables, math, user input, and while/if-else loops. 
+
+One cool technical quirk: because we designed the VM's memory stack strictly around integers (similar to how C works under the hood), boolean values don't print as "true" or "false". If you run a boolean check, it evaluates and prints out a 1 or a 0!
+
+Example Code (demo_calculator.cvm):
+let num1 = 0;
+let num2 = 0;
+input num1;
+input num2;
+let total = num1 + num2;
+print total;
