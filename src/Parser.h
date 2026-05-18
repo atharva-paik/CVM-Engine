@@ -1,8 +1,8 @@
-//Implemented parser logic 
 #pragma once
 #include <vector>
 #include <memory>
 #include <string>
+#include <stdexcept>
 #include "lexer.h"
 #include "ast.h"
 
@@ -18,6 +18,14 @@ private:
         return false;
     }
 
+    Token consume(TokenType type, const std::string& message) {
+        if (peek().type == type) {
+            current++;
+            return tokens[current - 1];
+        }
+        throw std::runtime_error("Parse Error: " + message);
+    }
+
 public:
     Parser(std::vector<Token> tokenList) { tokens = tokenList; }
 
@@ -30,17 +38,24 @@ public:
        
         if (match(LEFT_PAREN)) {
             auto expr = comparison(); 
-            match(RIGHT_PAREN);
+            consume(RIGHT_PAREN, "Expected ')' after expression.");
             return expr;
         }
-        return nullptr; 
+        throw std::runtime_error("Parse Error: Expected expression.");
+    }
+
+    std::shared_ptr<ASTNode> unary() {
+        if (match(MINUS)) {
+            return std::make_shared<UnaryOpNode>(MINUS, unary());
+        }
+        return primary();
     }
 
     std::shared_ptr<ASTNode> factor() {
-        std::shared_ptr<ASTNode> left = primary();
+        std::shared_ptr<ASTNode> left = unary();
         while (match(STAR) || match(SLASH)) {
             TokenType op = tokens[current - 1].type;
-            left = std::make_shared<BinaryOpNode>(op, left, primary());
+            left = std::make_shared<BinaryOpNode>(op, left, unary());
         }
         return left;
     }
@@ -69,76 +84,78 @@ public:
         while (match(SEMICOLON)) {} 
 
         if (match(LET)) {
-            match(IDENTIFIER); std::string varName = tokens[current - 1].lexeme;
-            match(ASSIGN);
+            Token name = consume(IDENTIFIER, "Expected variable name after 'let'.");
+            std::string varName = name.lexeme;
+            consume(ASSIGN, "Expected '=' after variable name.");
             auto decl = std::make_shared<VarDeclNode>(varName, comparison());
-            match(SEMICOLON); 
+            consume(SEMICOLON, "Expected ';' after variable declaration.");
             return decl;
         }
         
         if (match(PRINT)) {
             auto val = comparison();
-            match(SEMICOLON);
+            consume(SEMICOLON, "Expected ';' after print statement.");
             return std::make_shared<PrintNode>(val);
         }
 
         if (match(INPUT)) {
-            match(IDENTIFIER);
-            std::string varName = tokens[current - 1].lexeme;
-            match(SEMICOLON);
+            Token name = consume(IDENTIFIER, "Expected variable name after 'input'.");
+            std::string varName = name.lexeme;
+            consume(SEMICOLON, "Expected ';' after input statement.");
             return std::make_shared<InputNode>(varName);
         }
 
         if (match(WHILE)) {
-            match(LEFT_PAREN); 
+            consume(LEFT_PAREN, "Expected '(' after 'while'.");
             std::shared_ptr<ASTNode> condition = comparison(); 
-            match(RIGHT_PAREN); 
+            consume(RIGHT_PAREN, "Expected ')' after while condition.");
             
-            match(LEFT_BRACE); 
+            consume(LEFT_BRACE, "Expected '{' before while body.");
             std::vector<std::shared_ptr<ASTNode>> bodyStmts;
             while (!isAtEnd() && peek().type != RIGHT_BRACE) {
                 bodyStmts.push_back(statement()); 
             }
-            match(RIGHT_BRACE); 
+            consume(RIGHT_BRACE, "Expected '}' after while body.");
             return std::make_shared<WhileNode>(condition, std::make_shared<BlockNode>(bodyStmts));
         }
 
         if (match(IF)) {
-            match(LEFT_PAREN);
+            consume(LEFT_PAREN, "Expected '(' after 'if'.");
             std::shared_ptr<ASTNode> condition = comparison();
-            match(RIGHT_PAREN);
+            consume(RIGHT_PAREN, "Expected ')' after if condition.");
             
-            match(LEFT_BRACE);
+            consume(LEFT_BRACE, "Expected '{' before if body.");
             std::vector<std::shared_ptr<ASTNode>> thenStmts;
             while (!isAtEnd() && peek().type != RIGHT_BRACE) {
                 thenStmts.push_back(statement());
             }
-            match(RIGHT_BRACE);
+            consume(RIGHT_BRACE, "Expected '}' after if body.");
             auto thenBranch = std::make_shared<BlockNode>(thenStmts);
 
             std::shared_ptr<ASTNode> elseBranch = nullptr;
             if (match(ELSE)) {
-                match(LEFT_BRACE);
+                consume(LEFT_BRACE, "Expected '{' before else body.");
                 std::vector<std::shared_ptr<ASTNode>> elseStmts;
                 while (!isAtEnd() && peek().type != RIGHT_BRACE) {
                     elseStmts.push_back(statement());
                 }
-                match(RIGHT_BRACE);
+                consume(RIGHT_BRACE, "Expected '}' after else body.");
                 elseBranch = std::make_shared<BlockNode>(elseStmts);
             }
             return std::make_shared<IfNode>(condition, thenBranch, elseBranch);
         }
 
         if (peek().type == IDENTIFIER && current + 1 < tokens.size() && tokens[current + 1].type == ASSIGN) {
-            match(IDENTIFIER); std::string varName = tokens[current - 1].lexeme;
-            match(ASSIGN);
+            Token name = consume(IDENTIFIER, "Expected variable name.");
+            std::string varName = name.lexeme;
+            consume(ASSIGN, "Expected '=' in assignment.");
             auto assign = std::make_shared<AssignNode>(varName, comparison());
-            match(SEMICOLON);
+            consume(SEMICOLON, "Expected ';' after assignment.");
             return assign;
         }
         
         auto expr = comparison();
-        match(SEMICOLON); 
+        consume(SEMICOLON, "Expected ';' after expression.");
         
        
         return std::make_shared<PrintNode>(expr);
