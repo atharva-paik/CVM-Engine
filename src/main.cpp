@@ -3,13 +3,15 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 #include "lexer.h" 
 #include "ast.h"
 #include "Parser.h" 
 #include "compiler.h" 
 #include "virtualmachine.h" 
 
-void runPipeline(std::string code, bool showAST, bool showBytecode) {
+
+void runPipeline(std::string code, bool showAST, bool showBytecode, long long stepLimit) {
     try {
         Lexer lexer(code);
         std::vector<Token> tokens = lexer.tokenize();
@@ -18,21 +20,18 @@ void runPipeline(std::string code, bool showAST, bool showBytecode) {
         VM vm;
         
         std::vector<std::shared_ptr<ASTNode>> program = parser.parse();
-        
-    
         if (showAST) {
             printAST(program);
         }
 
         std::vector<int> bytecode = compiler.compile(program);
-        
-      
         if (showBytecode) {
             printBytecode(bytecode);
         }
-
-        std::cout << "output->\n";
+        
+        std::cout << " -> ";
         vm.load(bytecode);
+        vm.setStepLimit(stepLimit);
         vm.run(); 
         std::cout << "==========================\n";
         
@@ -46,24 +45,30 @@ void runPipeline(std::string code, bool showAST, bool showBytecode) {
 int main(int argc, char* argv[]) {
     bool showAST = false;
     bool showBytecode = false;
+    long long stepLimit = 100000;
     std::string filename = "";
 
-    
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--ast") {
+        if (arg == "--ast" || arg == "-ast") {
             showAST = true;
-        } else if (arg == "--bytecode") {
+        } else if (arg == "--bytecode" || arg == "-bytecode") {
             showBytecode = true;
-        } else if (arg == "--debug") { 
+        } else if (arg == "--debug" || arg == "-debug") {
             showAST = true;
             showBytecode = true;
+        } else if ((arg == "--max-steps" || arg == "-max-steps") && i + 1 < argc) {
+            stepLimit = std::atoll(argv[++i]);
+            if (stepLimit <= 0) {
+                stepLimit = 100000;
+            }
+        } else if (filename.empty()) {
+            filename = arg;
         } else {
-            filename = arg; 
+            std::cout << "Warning: Ignoring extra argument '" << arg << "'\n";
         }
     }
 
-  
     if (!filename.empty()) {
         std::ifstream file(filename);
         
@@ -77,7 +82,7 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Running " << filename << "...\n";
         std::cout << "-----------------------------------------\n";
-        runPipeline(buffer.str(), showAST, showBytecode);
+        runPipeline(buffer.str(), showAST, showBytecode, stepLimit);
         std::cout << "-----------------------------------------\n";
         return 0;
     }
@@ -85,6 +90,7 @@ int main(int argc, char* argv[]) {
    
     std::cout << "-----------------------------------------\n";
     std::cout << "        CVM++ INTERACTIVE TERMINAL       \n";
+    
     std::cout << "-----------------------------------------\n\n";
 
     while (true) {
@@ -98,7 +104,7 @@ int main(int argc, char* argv[]) {
         }
         if (code.empty()) continue;
 
-        runPipeline(code, showAST, showBytecode);
+        runPipeline(code, showAST, showBytecode, stepLimit);
     }
 
     return 0;
