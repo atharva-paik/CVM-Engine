@@ -1,0 +1,12 @@
+# Compiled executables and build files
+*.exe
+*.o
+*.out
+cvm
+
+# IDE settings (Visual Studio Code)
+.vscode/
+
+# OS generated junk files
+.DS_Store
+Thumbs.db
