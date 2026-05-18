@@ -1,6 +1,16 @@
-let a = (5 + 5) * 2;
+let a = 10;
 let b = 20;
-let c = a - b + (10 / 2);
-print a;
-print b;
-print c;
+
+let sum = a + b;
+let diff = a - b;
+let mult = a * b;
+let div = b / a;
+let neg = -a;
+let complex = (a + 5) * 2;
+
+print sum;     // Expected: 30
+print diff;    // Expected: -10
+print mult;    // Expected: 200
+print div;     // Expected: 2
+print neg;     // Expected: -10
+print complex; // Expected: 30
